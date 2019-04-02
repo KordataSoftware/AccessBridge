@@ -1,0 +1,17 @@
+POST http://localhost:5000/v1/northwind/mutate
+content-type: application/json
+
+{
+    "command": "insert into customers (`Company`, `Last Name`, `First Name`, `Job Title`, `Address`, `City`, `State/Province`, `ZIP/Postal Code`, `Country/Region`) VALUES (?,?,?,?,?,?,?,?,?)",
+    "parameters": {
+    "Company": "RyanCo",
+    "Last Name": "Thompson",
+    "First Name": "Russell",
+    "Job Title": "Developer",
+    "Address": "12301 W Explorer Dr",
+    "City": "Boise",
+    "State/Province": "ID",
+    "ZIP/Postal Code": "83713",
+    "Country/Region": "USA",
+  }
+}

@@ -1,0 +1,6 @@
+POST http://localhost:5000/v1/northwind/query
+content-type: application/json
+
+{
+    "command": "select `First Name` from Customers where `Last Name` =",
+}

@@ -1,0 +1,9 @@
+POST http://localhost:5000/v1/northwind/query
+content-type: application/json
+
+{
+    "command": "select * from customers where `Job Title` = ?",
+    "parameters": {
+        "Job Title": "Owner"
+    }
+}

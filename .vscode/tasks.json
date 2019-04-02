@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Server/Kordata.AccessBridge.Server.csproj"
+      ],
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "publish-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/Server/Kordata.AccessBridge.Server.csproj"
+      ],
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "watch-server",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "${workspaceFolder}/Server/Kordata.AccessBridge.Server.csproj"
+      ],
+      "problemMatcher": "$tsc"
+    }
+  ]
+}
