@@ -18,10 +18,14 @@ namespace Kordata.AccessBridge.Server
             this.connectionFactory = connectionFactory;
         }
 
-        [HttpGet("/v1/health_check")]
-        public IActionResult HealthCheck()
+        [HttpGet("/v1/{database}/health_check")]
+        public Task<IActionResult> HealthCheck(string database)
         {
-            return Ok();
+            return
+                ValidateDatabase(database, () =>
+                {
+                    return Task.FromResult((IActionResult)Ok());
+                });
         }
 
         [HttpPost("/v1/{database}/query")]
@@ -89,7 +93,7 @@ namespace Kordata.AccessBridge.Server
 
                         if (query.Parameters != null)
                         {
-                            query.Parameters.ForEach(parm => command.Parameters.Add(parm));
+                            query.Parameters.ForEach((parm, i) => command.Parameters.AddWithValue(i.ToString(), parm));
                         }
 
                         return await then?.Invoke(command);

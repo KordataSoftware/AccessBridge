@@ -3,15 +3,15 @@ content-type: application/json
 
 {
     "command": "insert into customers (`Company`, `Last Name`, `First Name`, `Job Title`, `Address`, `City`, `State/Province`, `ZIP/Postal Code`, `Country/Region`) VALUES (?,?,?,?,?,?,?,?,?)",
-    "parameters": {
-    "Company": "RyanCo",
-    "Last Name": "Thompson",
-    "First Name": "Russell",
-    "Job Title": "Developer",
-    "Address": "12301 W Explorer Dr",
-    "City": "Boise",
-    "State/Province": "ID",
-    "ZIP/Postal Code": "83713",
-    "Country/Region": "USA",
-  }
+    "parameters": [
+    "RyanCo",
+    "Thompson",
+    "Russell",
+    "Developer",
+    "12301 W Explorer Dr",
+    "Boise",
+    "ID",
+    "83713",
+    "USA"
+    ]
 }
