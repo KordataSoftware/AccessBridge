@@ -18,6 +18,12 @@ namespace Kordata.AccessBridge.Server
             this.connectionFactory = connectionFactory;
         }
 
+        [HttpGet("/v1/health_check")]
+        public IActionResult HealthCheck()
+        {
+            return Ok();
+        }
+
         [HttpPost("/v1/{database}/query")]
         public Task<IActionResult> Query(string database, [FromBody]Query query)
         {
