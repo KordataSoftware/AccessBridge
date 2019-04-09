@@ -83,7 +83,7 @@ namespace Kordata.AccessBridge.Server
 
                         if (query.Parameters != null)
                         {
-                            query.Parameters.ForEach(kvp => command.Parameters.AddWithValue(kvp.Key, kvp.Value));
+                            query.Parameters.ForEach(parm => command.Parameters.Add(parm));
                         }
 
                         return await then?.Invoke(command);
