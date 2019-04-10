@@ -28,6 +28,11 @@ public class OdbcConnection implements Connection {
         this.api = api;
     }
 
+    void checkClosed() throws SQLException {
+        if (closed)
+            throw new SQLException("Connection is closed");
+    }
+
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return null;

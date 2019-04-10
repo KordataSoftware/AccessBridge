@@ -39,17 +39,20 @@ public class BridgeAPIShould {
     }
 
     private String buildQueryResponseString(int numResults) {
-        ArrayNode node = mapper.createArrayNode();
+        ArrayNode resultNode = mapper.createArrayNode();
 
         for (int i = 0; i < numResults; i++) {
             ObjectNode obj = mapper.createObjectNode();
             obj.put("LastName", "LName" + i);
             obj.put("FirstName", "FName" + i);
-            node.add(obj);
+            resultNode.add(obj);
         }
-
         try {
-            return mapper.writeValueAsString(node);
+            ObjectNode responseNode = mapper.createObjectNode();
+            responseNode.set("schema", mapper.createArrayNode());
+            responseNode.set("results", resultNode);
+
+            return mapper.writeValueAsString(responseNode);
         } catch (Exception e) {
             assumeNoException(e);
             return "";
@@ -125,7 +128,7 @@ public class BridgeAPIShould {
     }
 
     @Test
-    public void returnArrayOfJsonObjectsFromQuery() throws IOException, InterruptedException {
+    public void returnQueryResultFromQuery() throws IOException, InterruptedException {
         // Arrange
         int resultSetSize = 3;
         server.enqueue(new MockResponse().setBody(buildQueryResponseString(resultSetSize)));
@@ -141,10 +144,15 @@ public class BridgeAPIShould {
         expectedRequest.set("parameters", params);
 
         // Act
-        ArrayNode result = api.query(query, params);
+        ObjectNode result = api.query(query, params);
 
         // Assert
-        assertEquals(resultSetSize, result.size());
+        assertTrue(result.has("schema"));
+        assertTrue(result.has("results"));
+
+        ArrayNode results = (ArrayNode) result.get("results");
+
+        assertEquals(resultSetSize, results.size());
         RecordedRequest request = server.takeRequest();
         ObjectNode requestBody = (ObjectNode) mapper.readTree(request.getBody().readUtf8());
 

@@ -6,17 +6,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class OdbcStatement implements Statement {
-    private final BridgeAPI api;
-    private final OdbcConnection connection;
+    protected final BridgeAPI api;
+    protected final OdbcConnection connection;
 
-    private boolean closed = false;
+    protected boolean closed = false;
 
     public OdbcStatement(OdbcConnection connection, BridgeAPI api) {
         this.connection = connection;
         this.api = api;
+    }
+
+    void checkClosed() throws SQLException {
+        // Check the connection first so that Statement methods
+        // throw a "Connection closed" exception if the reason
+        // that the statement was closed is because the connection
+        // was closed.
+        connection.checkClosed();
+        if (closed) {
+            throw new SQLException("Statement is closed");
+        }
     }
 
     @Override
@@ -35,7 +46,7 @@ public class OdbcStatement implements Statement {
             throw new SQLException("Statement closed");
 
         try {
-            ArrayNode results = api.query(sql, null);
+            ObjectNode results = api.query(sql, null);
 
             return new OdbcResultSet(this, results);
         } catch (IOException e) {

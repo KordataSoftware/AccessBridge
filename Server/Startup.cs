@@ -23,10 +23,7 @@ namespace Kordata.AccessBridge.Server
             this.configuration = configuration;
             this.environment = environment;
 
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            };
+            JsonConvert.DefaultSettings = () => SchemaSerializer.Settings;
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.

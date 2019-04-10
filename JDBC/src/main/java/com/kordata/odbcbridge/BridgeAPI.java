@@ -137,7 +137,7 @@ public class BridgeAPI {
         }
     }
 
-    public ArrayNode query(String sql, ArrayNode parameters) throws IOException {
+    public ObjectNode query(String sql, ArrayNode parameters) throws IOException {
         ObjectNode bodyNode = mapper.createObjectNode();
         bodyNode.put("command", sql);
 
@@ -153,7 +153,7 @@ public class BridgeAPI {
         }
 
         try {
-            return (ArrayNode) mapper.readTree(response.body().byteStream());
+            return (ObjectNode) mapper.readTree(response.body().byteStream());
         } catch (JsonParseException e) {
             // Shouldn't happen because we manually constructed the object.
             throw new IllegalStateException(e.getMessage());

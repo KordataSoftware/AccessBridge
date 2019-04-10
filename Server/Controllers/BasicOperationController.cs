@@ -37,13 +37,18 @@ namespace Kordata.AccessBridge.Server
                 WithCommand(database, query, command =>
                 WithReader(command, async reader =>
                 {
+                    var response = new JObject();
+                    response["schema"] = reader.GetSchemaJArray();
+
                     var results = new JArray();
                     while (await reader.ReadAsync())
                     {
                         results.Add(reader.GetJObject());
                     }
 
-                    return new JsonResult(results);
+                    response["results"] = results;
+
+                    return new JsonResult(response);
                 }))));
         }
 
