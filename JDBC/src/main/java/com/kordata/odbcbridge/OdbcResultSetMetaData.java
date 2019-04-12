@@ -16,7 +16,7 @@ public class OdbcResultSetMetaData implements ResultSetMetaData {
     }
 
     private ObjectNode getColumnSchema(int column) throws SQLException {
-        if (column < 1 || column >= schemaArray.size()) {
+        if (column < 1 || column > schemaArray.size()) {
             throw new SQLException("Column index out of bounds");
         }
 

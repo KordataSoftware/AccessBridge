@@ -42,16 +42,16 @@ public class BridgeAPI {
         return password;
     }
 
-    private String url;
-
-    public String getURL() {
-        return url;
-    }
-
     private boolean useSsl;
 
     public boolean getUseSsl() {
         return useSsl;
+    }
+
+    private String url;
+
+    public String getURL() {
+        return url;
     }
 
     public void setURL(String url) {

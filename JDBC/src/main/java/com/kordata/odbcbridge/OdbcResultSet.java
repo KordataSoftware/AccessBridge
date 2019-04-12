@@ -1,6 +1,5 @@
 package com.kordata.odbcbridge;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -26,7 +25,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -34,8 +32,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -96,13 +94,24 @@ public class OdbcResultSet implements ResultSet {
         return lastReadWasNull;
     }
 
-    public OdbcResultSet(OdbcStatement statement, ObjectNode resultObject) {
+    public OdbcResultSet(OdbcStatement statement, ObjectNode responseObject) {
         this.statement = statement;
 
-        this.resultArray = (ArrayNode) resultObject.get("results");
-        this.schemaArray = (ArrayNode) resultObject.get("schema");
+        this.resultArray = (ArrayNode) responseObject.get("results");
+        this.schemaArray = (ArrayNode) responseObject.get("schema");
 
         metaData = new OdbcResultSetMetaData(schemaArray);
+    }
+
+    public static OdbcResultSet Empty() {
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode results = mapper.createArrayNode();
+        ArrayNode schema = mapper.createArrayNode();
+        ObjectNode response = mapper.createObjectNode();
+        response.set("results", results);
+        response.set("schema", schema);
+
+        return new OdbcResultSet(null, response);
     }
 
     @Override

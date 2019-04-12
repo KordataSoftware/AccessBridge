@@ -33,6 +33,14 @@ public class OdbcConnection implements Connection {
             throw new SQLException("Connection is closed");
     }
 
+    public String getURL() throws SQLException {
+        return api.getURL();
+    }
+
+    public String getUserName() throws SQLException {
+        return api.getUsername();
+    }
+
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         return null;
@@ -95,7 +103,7 @@ public class OdbcConnection implements Connection {
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        return null;
+        return new OdbcDatabaseMetaData(this);
     }
 
     @Override
