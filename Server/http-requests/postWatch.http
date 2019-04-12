@@ -1,0 +1,9 @@
+POST http://localhost:5000/v1/watches
+content-type: application/json
+
+{
+    "database": "northwind",
+    "table": "Customers",
+    "timestampColumn": "LastModified",
+    "webhookUri": "http://localhost:5001/v1/sink"
+}

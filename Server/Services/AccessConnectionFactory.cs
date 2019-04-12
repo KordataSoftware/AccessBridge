@@ -1,5 +1,6 @@
 using System.Data.Odbc;
 using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace Kordata.AccessBridge.Server
 {
@@ -14,9 +15,9 @@ namespace Kordata.AccessBridge.Server
     {
         private readonly string databaseLocation;
 
-        public AccessConnectionFactory(string databaseLocation)
+        public AccessConnectionFactory(IConfiguration configuration)
         {
-            this.databaseLocation = databaseLocation;
+            this.databaseLocation = configuration.GetValue<string>("DatabaseDirectory");
         }
 
         public bool DatabaseExists(string database)

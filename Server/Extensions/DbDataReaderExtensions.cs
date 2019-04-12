@@ -31,7 +31,7 @@ namespace Kordata.AccessBridge.Server
         /// <summary>
         /// Custom column schema to support lack of native method. From https://github.com/dotnet/corefx/issues/26302#issuecomment-424609013
         /// </summary>
-        private static ReadOnlyCollection<DbColumn> GetCustomColumnSchema(this DbDataReader reader)
+        public static ReadOnlyCollection<DbColumn> GetCustomColumnSchema(this DbDataReader reader)
         {
             IList<DbColumn> columnSchema = new List<DbColumn>();
             DataTable schemaTable = reader.GetSchemaTable();
@@ -52,14 +52,14 @@ namespace Kordata.AccessBridge.Server
         private class DataRowDbColumn : DbColumn
         {
             #region Fields
-           
-            private readonly DataColumnCollection schemaColumns;       
+
+            private readonly DataColumnCollection schemaColumns;
             private readonly DataRow schemaRow;
 
             #endregion
 
             #region Constructors and Destructors
-            
+
             public DataRowDbColumn(DataRow readerSchemaRow, DataColumnCollection readerSchemaColumns)
             {
                 this.schemaRow = readerSchemaRow;

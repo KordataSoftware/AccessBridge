@@ -1,0 +1,18 @@
+POST http://localhost:5000/v1/northwind/Customers?primaryKey=ID
+content-type: application/json
+
+[{
+    "ID": 36,
+    "Company": "ObjectAPICompany",
+    "LastName": "API",
+    "FirstName": "Object",
+    "EmailAddress": "api@object.com",
+    "JobTitle": "Tester",
+    "BusinessPhone": "(123)555-0100",
+    "FaxNumber": "(123)555-0101",
+    "Address": "123 1st Street",
+    "City": "Boise",
+    "StateProvince": "ID",
+    "ZIPPostalCode": "83713",
+    "CountryRegion": "Updated!"
+  }]

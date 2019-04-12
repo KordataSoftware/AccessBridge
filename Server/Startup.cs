@@ -32,8 +32,16 @@ namespace Kordata.AccessBridge.Server
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddHttpClient("WatchWebhooks");
+
+            services.AddSingleton<ICouchbaseLiteFactory, CouchbaseLiteFactory>(_ =>
+                new CouchbaseLiteFactory(configuration.GetSection("WatchDatabase")));
             services.AddSingleton<IAccessConnectionFactory, AccessConnectionFactory>(_ =>
-                new AccessConnectionFactory(configuration.GetSection("Data").GetValue<string>("Directory")));
+                new AccessConnectionFactory(configuration.GetSection("MicrosoftAccess")));
+
+            services.AddTransient<IWatchRepository, WatchRepository>();
+
+            services.AddHostedService<TableWatcher>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

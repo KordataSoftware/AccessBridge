@@ -12,6 +12,16 @@
       "problemMatcher": "$tsc"
     },
     {
+      "label": "build-sink",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/TestSink/Kordata.AccessBridge.TestSink.csproj"
+      ],
+      "problemMatcher": "$tsc"
+    },
+    {
       "label": "publish-server",
       "command": "dotnet",
       "type": "process",
