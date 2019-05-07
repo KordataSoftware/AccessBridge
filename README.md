@@ -20,8 +20,6 @@ The location to look for databases needs to be set in the Server's `appsettings.
 
 ### API
 
-There are currently two endpoints:
-
 #### Query
 
 ```http
@@ -78,6 +76,73 @@ Returns a JSON object with the number of rows affected:
 {
   "rowsAffected": 1
 }
+```
+
+#### Watches
+
+You can set up listeners to watch Access tables for changes. When found, changed records will be pushed to the web endpoint you specify.
+
+**To add a new watch:**
+
+```http
+POST /v1/watches
+```
+
+Request body:
+
+```
+{
+    "database": "northwind",
+    "table": "Customers",
+    "timestampColumn": "LastModified",
+    "webhookUri": "http://localhost:5001/v1/sink"
+}
+```
+
+**To list watches for a database:**
+
+```http
+GET http://localhost:5000/v1/watches?database={database name}
+```
+
+#### Restified DB access
+
+You can also query the DB using a 'restified' approach that cuts out the SQL queries.
+
+**Get Objects**
+Returns rows from the database table as JSON objects:
+
+```http
+GET http://localhost:5000/v1/{database name}/{table name}
+```
+
+**Post Objects**
+Inserts or updates JSON objects into the DB table and returns the number of rows affected. You have to tell the service which column is the primary key because Access doesn't report that information through ODBC.
+
+```http
+POST http://localhost:5000/v1/{database name}/{table name}?primaryKey=ID
+```
+
+Body example
+
+```json
+[
+  {
+    "ID": 36,
+    "Company": "ObjectAPICompany",
+    "LastName": "API",
+    "FirstName": "Object",
+    "EmailAddress": "api@object.com",
+    "JobTitle": "Tester",
+    "BusinessPhone": "(123)555-0100",
+    "FaxNumber": "(123)555-0101",
+    "Address": "123 1st Street",
+    "City": "Boise",
+    "StateProvince": "ID",
+    "ZIPPostalCode": "83713",
+    "CountryRegion": "Updated!"
+  }
+]
 ```
 
 ### Auth
