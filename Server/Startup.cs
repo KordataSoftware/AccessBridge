@@ -39,6 +39,8 @@ namespace Kordata.AccessBridge.Server
             services.AddSingleton<IAccessConnectionFactory, AccessConnectionFactory>(_ =>
                 new AccessConnectionFactory(configuration.GetSection("MicrosoftAccess")));
 
+            services.AddTransient<IFileRepository, FileRepository>(_ =>
+                new FileRepository(configuration.GetSection("FileUpload")));
             services.AddTransient<IWatchRepository, WatchRepository>();
 
             services.AddHostedService<TableWatcher>();
