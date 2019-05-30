@@ -14,7 +14,7 @@ namespace Kordata.AccessBridge.Server
                 case JTokenType.Boolean:
                     return OdbcType.Bit;
                 case JTokenType.Integer:
-                    return OdbcType.Int;
+                    return OdbcType.SmallInt;
                 case JTokenType.String:
                     return OdbcType.VarChar;
                 default:
