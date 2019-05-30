@@ -115,7 +115,7 @@ namespace Kordata.AccessBridge.Server
             updateCommand.Parameters.Clear();
             record.Properties()
                 .Where(p => p.Name != primaryKey)
-                .Select(p => (Name: p.Name.ToParameterName(), Value: (JValue)p.Value))
+                .Select(p => (Name: p.Name, Value: (JValue)p.Value))
                 .ForEach(p => updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = p.Value.Value);
 
             var pKeyValue = (JValue)record[primaryKey];
@@ -128,8 +128,11 @@ namespace Kordata.AccessBridge.Server
         {
             insertCommand.Parameters.Clear();
             record.Properties()
-                .Select(p => p.Name)
-                .ForEach(c => insertCommand.Parameters.AddWithValue($"@{c.Replace(" ", "")}", ((JValue)record[c]).Value));
+                .Select(p => (Name: p.Name, Value: (JValue)p.Value))
+                .ForEach(p => 
+                {
+                    insertCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = ((JValue)record[p.Name]).Value;
+                });
 
             return insertCommand.ExecuteNonQueryAsync();
         }
