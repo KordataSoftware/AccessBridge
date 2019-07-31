@@ -71,26 +71,22 @@ namespace Kordata.AccessBridge.Server
                 insertCommand.CommandText = $"INSERT INTO {table} ({columnFragment}) VALUES ({parmFragment})";
                 insertCommand.Prepare();
 
-                var updateFragment = string.Join(",", columns.Where(c => c != primaryKey).Select(c => $"[{c}] = ?"));
-                updateCommand.CommandText = $"UPDATE {table} SET {updateFragment} WHERE {primaryKey} = ?";
-                updateCommand.Prepare();
-
                 var results = new JArray();
 
                 foreach (JObject record in records)
                 {
-                    var rowsAffected = -1;
+                    var success = false;
                     if (await RecordExistsAsync(record, primaryKey, checkCommand))
                     {
-                        rowsAffected = await UpdateRecordAsync(record, primaryKey, updateCommand);
+                        success = await UpdateRecordAsync(table, columns, record, primaryKey, updateCommand);
                     }
                     else
                     {
-                        rowsAffected = await InsertRecordAsync(record, insertCommand);
+                        success = await InsertRecordAsync(record, insertCommand);
                     }
 
                     var rowResult = new JObject();
-                    rowResult["success"] = rowsAffected > 0;
+                    rowResult["success"] = success;
                     results.Add(rowResult);
                 }
 
@@ -110,21 +106,48 @@ namespace Kordata.AccessBridge.Server
             return count > 0;
         }
 
-        private static async Task<int> UpdateRecordAsync(JObject record, string primaryKey, OdbcCommand updateCommand)
+        private static async Task<bool> UpdateRecordAsync(string table, List<string> columns, JObject record, string primaryKey, OdbcCommand updateCommand)
         {
-            updateCommand.Parameters.Clear();
-            record.Properties()
+            var propertyBatches = record.Properties()
                 .Where(p => p.Name != primaryKey)
                 .Select(p => (Name: p.Name, Value: (JValue)p.Value))
-                .ForEach(p => updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = p.Value.Value);
+                .Batch(127);
+            
+            var tasks = propertyBatches.Select(batch => UpdatePartialRecordAsync(table, columns, primaryKey, (JValue)record[primaryKey], batch, updateCommand));
 
-            var pKeyValue = (JValue)record[primaryKey];
-            updateCommand.Parameters.Add($"@[{primaryKey}]", pKeyValue.Type.ToOdbcType()).Value = pKeyValue.Value;
+            var success = true;
+            foreach (var task in tasks)
+            {
+                var result = await task;
+                if (!result)
+                {
+                    success = false;
+                }
+            }
 
-            return await updateCommand.ExecuteNonQueryAsync();
+            return success;
         }
 
-        private static Task<int> InsertRecordAsync(JObject record, OdbcCommand insertCommand)
+        private static async Task<bool> UpdatePartialRecordAsync(string table, List<string> columns, string pKeyName, JValue pKeyValue, 
+            IEnumerable<(string Name, JValue Value)> properties, OdbcCommand updateCommand)
+        {
+            updateCommand.Parameters.Clear();
+
+            var updateFragment = string.Join(",", columns.Where(c => c != pKeyName && properties.Any(p => p.Name == c)).Select(c => $"[{c}] = ?"));
+            updateCommand.CommandText = $"UPDATE {table} SET {updateFragment} WHERE {pKeyName} = ?";
+            updateCommand.Prepare();
+
+            properties
+                .ForEach(p => updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = p.Value.Value);
+
+            updateCommand.Parameters.Add($"@[{pKeyName}]", pKeyValue.Type.ToOdbcType()).Value = pKeyValue.Value;
+
+            var result = await updateCommand.ExecuteNonQueryAsync();
+
+            return result > 0;
+        }
+
+        private static async Task<bool> InsertRecordAsync(JObject record, OdbcCommand insertCommand)
         {
             insertCommand.Parameters.Clear();
             record.Properties()
@@ -134,7 +157,9 @@ namespace Kordata.AccessBridge.Server
                     insertCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = ((JValue)record[p.Name]).Value;
                 });
 
-            return insertCommand.ExecuteNonQueryAsync();
+            var rowsEffected = await insertCommand.ExecuteNonQueryAsync();
+
+            return rowsEffected > 0;
         }
 
         private List<string> GetInsertColumns(JObject obj)
