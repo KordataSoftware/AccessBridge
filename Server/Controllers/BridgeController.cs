@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Odbc;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -61,7 +62,14 @@ namespace Kordata.AccessBridge.Server
             using (var checkCommand = connection.CreateCommand())
             using (var insertCommand = connection.CreateCommand())
             using (var updateCommand = connection.CreateCommand())
+            using (var tableSchemaCommand = connection.CreateCommand())
             {
+                tableSchemaCommand.CommandText = $"SELECT TOP 1 * FROM {table}";
+                tableSchemaCommand.Prepare();
+                var tableSchemaCommandReader = await tableSchemaCommand.ExecuteReaderAsync();
+                var tableSchema = tableSchemaCommandReader.GetSchemaJArray();
+                tableSchemaCommandReader.Close();
+                
                 checkCommand.CommandText = $"SELECT Count([{primaryKey}]) FROM [{table}] WHERE [{primaryKey}] = ?";
                 checkCommand.Prepare();
 
@@ -78,7 +86,7 @@ namespace Kordata.AccessBridge.Server
                     var success = false;
                     if (await RecordExistsAsync(record, primaryKey, checkCommand))
                     {
-                        success = await UpdateRecordAsync(table, columns, record, primaryKey, updateCommand);
+                        success = await UpdateRecordAsync(table, tableSchema, columns, record, primaryKey, updateCommand);
                     }
                     else
                     {
@@ -106,14 +114,17 @@ namespace Kordata.AccessBridge.Server
             return count > 0;
         }
 
-        private static async Task<bool> UpdateRecordAsync(string table, List<string> columns, JObject record, string primaryKey, OdbcCommand updateCommand)
+        private static async Task<bool> UpdateRecordAsync(string table, JArray tableSchema, List<string> columns, 
+            JObject record, string primaryKey, OdbcCommand updateCommand)
         {
             var propertyBatches = record.Properties()
                 .Where(p => p.Name != primaryKey)
                 .Select(p => (Name: p.Name, Value: (JValue)p.Value))
                 .Batch(127);
             
-            var tasks = propertyBatches.Select(batch => UpdatePartialRecordAsync(table, columns, primaryKey, (JValue)record[primaryKey], batch, updateCommand));
+            var tasks = propertyBatches.Select(
+                batch => UpdatePartialRecordAsync(table, tableSchema, columns, primaryKey, (JValue)record[primaryKey], batch, updateCommand)
+            );
 
             var success = true;
             foreach (var task in tasks)
@@ -128,8 +139,8 @@ namespace Kordata.AccessBridge.Server
             return success;
         }
 
-        private static async Task<bool> UpdatePartialRecordAsync(string table, List<string> columns, string pKeyName, JValue pKeyValue, 
-            IEnumerable<(string Name, JValue Value)> properties, OdbcCommand updateCommand)
+        private static async Task<bool> UpdatePartialRecordAsync(string table, JArray tableSchema, List<string> columns, string pKeyName,  
+            JValue pKeyValue, IEnumerable<(string Name, JValue Value)> properties, OdbcCommand updateCommand)
         {
             updateCommand.Parameters.Clear();
 
@@ -138,7 +149,19 @@ namespace Kordata.AccessBridge.Server
             updateCommand.Prepare();
 
             properties
-                .ForEach(p => updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = p.Value.Value);
+                .ForEach(p => 
+                {
+                    var parameter = updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType());
+
+                    var columnSchema = tableSchema.First(c => (string)c["columnName"] == p.Name);
+
+                    if ((string)columnSchema["dataType"] == "string")
+                    {
+                        parameter.Size = (int)columnSchema["columnSize"];
+                    }
+
+                    parameter.Value = p.Value.Value;
+                });
 
             updateCommand.Parameters.Add($"@[{pKeyName}]", pKeyValue.Type.ToOdbcType()).Value = pKeyValue.Value;
 
