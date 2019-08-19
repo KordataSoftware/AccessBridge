@@ -4,6 +4,8 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <RootNamespace>Kordata.AccessBridge.Server</RootNamespace>
+    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +13,7 @@
     <PackageReference Include="Couchbase.Lite.Support.NetDesktop" Version="2.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="2.2.0" />
     <PackageReference Include="MoreLinq" Version="3.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="NodaTime" Version="2.4.5" />
