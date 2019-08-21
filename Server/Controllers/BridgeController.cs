@@ -90,7 +90,7 @@ namespace Kordata.AccessBridge.Server
                     }
                     else
                     {
-                        success = await InsertRecordAsync(record, insertCommand);
+                        success = await InsertRecordAsync(tableSchema, record, insertCommand);
                     }
 
                     var rowResult = new JObject();
@@ -170,14 +170,24 @@ namespace Kordata.AccessBridge.Server
             return result > 0;
         }
 
-        private static async Task<bool> InsertRecordAsync(JObject record, OdbcCommand insertCommand)
+        private static async Task<bool> InsertRecordAsync(JArray tableSchema, JObject record, OdbcCommand insertCommand)
         {
             insertCommand.Parameters.Clear();
             record.Properties()
                 .Select(p => (Name: p.Name, Value: (JValue)p.Value))
                 .ForEach(p => 
                 {
-                    insertCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType()).Value = ((JValue)record[p.Name]).Value;
+                    var parameter = insertCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType());
+
+                    var columnSchema = tableSchema.First(c => (string)c["columnName"] == p.Name);
+
+                    if ((string)columnSchema["dataType"] == "string")
+                    {
+                        parameter.Size = (int)columnSchema["columnSize"];
+                    }
+
+                    parameter.Value = ((JValue)record[p.Name]).Value;
+
                 });
 
             var rowsEffected = await insertCommand.ExecuteNonQueryAsync();
