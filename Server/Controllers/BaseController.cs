@@ -12,7 +12,7 @@ namespace Kordata.AccessBridge.Server
 {
     public abstract class BaseController : Controller
     {
-        private readonly ILogger logger;
+        protected readonly ILogger logger;
         private readonly IAccessConnectionFactory connectionFactory;
 
         public BaseController(ILogger logger, IAccessConnectionFactory connectionFactory)
@@ -41,16 +41,22 @@ namespace Kordata.AccessBridge.Server
         {
             using (var connection = connectionFactory.CreateConnection(database))
             {
-                if (connection == null) return BadRequest();
+                if (connection == null)
+                {
+                    logger.LogWarning("Connection came back null.");
+                    return BadRequest();
+                }
 
                 try
                 {
                     await connection.OpenAsync();
+                    logger.LogTrace("Connection open");
 
                     return await then?.Invoke(connection);
                 }
                 catch (OdbcException e)
                 {
+                    logger.LogError(e.Message);
                     return BadRequest(e.Message);
                 }
             }
@@ -60,14 +66,20 @@ namespace Kordata.AccessBridge.Server
         {
             using (var connection = connectionFactory.CreateConnection(database))
             {
-                if (connection == null) return BadRequest();
+                if (connection == null)
+                {
+                    logger.LogWarning("Connection came back null.");
+                    return BadRequest();
+                }
 
                 try
                 {
                     await connection.OpenAsync();
+                    logger.LogTrace("Connection open");
 
                     using (var command = connection.CreateCommand())
                     {
+                        logger.LogDebug("Creating command {Command}", query.Command);
                         command.CommandText = query.Command;
 
                         if (query.Parameters != null)
@@ -80,6 +92,7 @@ namespace Kordata.AccessBridge.Server
                 }
                 catch (OdbcException e)
                 {
+                    logger.LogError(e.Message);
                     return BadRequest(e.Message);
                 }
             }
@@ -89,6 +102,7 @@ namespace Kordata.AccessBridge.Server
         {
             try
             {
+                logger.LogDebug("Getting reader");
                 var reader = await command.ExecuteReaderAsync();
 
                 var result = await then?.Invoke(reader);
@@ -99,6 +113,8 @@ namespace Kordata.AccessBridge.Server
             }
             catch (OdbcException e)
             {
+                logger.LogError(e.Message);
+
                 if (e.Message.Contains("42S02")) return NotFound();
                 return BadRequest(e.Message);
             }

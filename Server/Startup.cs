@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kordata.AccessBridge.Server
@@ -34,13 +28,14 @@ namespace Kordata.AccessBridge.Server
 
             services.AddHttpClient("WatchWebhooks");
 
-            services.AddSingleton<ICouchbaseLiteFactory, CouchbaseLiteFactory>(_ =>
-                new CouchbaseLiteFactory(configuration.GetSection("WatchDatabase")));
-            services.AddSingleton<IAccessConnectionFactory, AccessConnectionFactory>(_ =>
-                new AccessConnectionFactory(configuration.GetSection("MicrosoftAccess")));
+            services.Configure<CouchbaseConfig>(configuration.GetSection(CouchbaseConfig.WatchDatabase));
+            services.Configure<AccessConfig>(configuration.GetSection(AccessConfig.MicrosoftAccess));
+            services.Configure<FileConfig>(configuration.GetSection(FileConfig.FileUpload));
 
-            services.AddTransient<IFileRepository, FileRepository>(_ =>
-                new FileRepository(configuration.GetSection("FileUpload")));
+            services.AddSingleton<ICouchbaseLiteFactory, CouchbaseLiteFactory>();
+            services.AddSingleton<IAccessConnectionFactory, AccessConnectionFactory>();
+
+            services.AddTransient<IFileRepository, FileRepository>();
             services.AddTransient<IWatchRepository, WatchRepository>();
 
             services.AddHostedService<TableWatcher>();

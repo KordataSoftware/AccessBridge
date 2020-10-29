@@ -1,7 +1,8 @@
 
 using Couchbase.Lite;
 using Couchbase.Lite.Query;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Kordata.AccessBridge.Server
 {
@@ -13,21 +14,27 @@ namespace Kordata.AccessBridge.Server
 
     public class CouchbaseLiteFactory : ICouchbaseLiteFactory
     {
-        private readonly string databaseName;
+        private readonly CouchbaseConfig config;
+        private readonly ILogger logger;
 
-        public CouchbaseLiteFactory(IConfiguration configuration)
+        public CouchbaseLiteFactory(IOptions<CouchbaseConfig> options, ILogger<CouchbaseLiteFactory> logger)
         {
-            databaseName = configuration.GetValue<string>("Name");
+            this.logger = logger;
+            config = options.Value;
             Couchbase.Lite.Support.NetDesktop.Activate();
             CreateIndexes();
+
+            logger.LogDebug("Initialized Couchbase connection factory for database {Database}", config.Name);
         }
 
         private void CreateIndexes()
         {
+            logger.LogTrace("Creating Indexes");
+            
             var dbIndex = IndexBuilder.ValueIndex(
                 ValueIndexItem.Expression(Expression.Property("database")));
 
-            using (var db = new Database(databaseName))
+            using (var db = new Database(config.Name))
             {
                 db.CreateIndex("DatabaseIndex", dbIndex);
             }
@@ -35,7 +42,7 @@ namespace Kordata.AccessBridge.Server
 
         public Database GetDatabase()
         {
-            return new Database(databaseName);
+            return new Database(config.Name);
         }
     }
 }

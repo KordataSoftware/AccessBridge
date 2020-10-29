@@ -37,9 +37,11 @@ namespace Kordata.AccessBridge.Server
                 WithCommand(database, query, command =>
                 WithReader(command, async reader =>
                 {
+                    logger.LogTrace("Getting schema.");
                     var response = new JObject();
                     response["schema"] = reader.GetSchemaJArray();
 
+                    logger.LogTrace("Reading properties.");
                     var results = new JArray();
                     while (await reader.ReadAsync())
                     {
@@ -60,6 +62,7 @@ namespace Kordata.AccessBridge.Server
                 ValidateQuery(query, () =>
                 WithCommand(database, query, async command =>
                 {
+                    logger.LogTrace("Running mutation.");
                     var rowsAffected = await command.ExecuteNonQueryAsync();
 
                     return new JsonResult(new JObject(new JProperty("rowsAffected", rowsAffected)));

@@ -59,20 +59,25 @@ namespace Kordata.AccessBridge.Server
 
         private async Task<JArray> InsertOrUpdateAsync(string table, JArray records, string primaryKey, OdbcConnection connection)
         {
+            logger.LogInformation("Attempting to insert or update {Count} records in table {Table}.", records.Count, table);
+
             using (var checkCommand = connection.CreateCommand())
             using (var insertCommand = connection.CreateCommand())
             using (var updateCommand = connection.CreateCommand())
             using (var tableSchemaCommand = connection.CreateCommand())
             {
+                logger.LogDebug("Reading table schema.");
                 tableSchemaCommand.CommandText = $"SELECT TOP 1 * FROM {table}";
                 tableSchemaCommand.Prepare();
                 var tableSchemaCommandReader = await tableSchemaCommand.ExecuteReaderAsync();
                 var tableSchema = tableSchemaCommandReader.GetSchemaJArray();
                 tableSchemaCommandReader.Close();
                 
+                logger.LogDebug("Preparing record exists check.");
                 checkCommand.CommandText = $"SELECT Count([{primaryKey}]) FROM [{table}] WHERE [{primaryKey}] = ?";
                 checkCommand.Prepare();
 
+                logger.LogDebug("Building insert command.");
                 var columns = GetInsertColumns((JObject)records[0]);
                 var columnFragment = string.Join(",", columns.Select(c => $"[{c}]"));
                 var parmFragment = string.Join(",", columns.Select(c => "?"));
@@ -80,9 +85,11 @@ namespace Kordata.AccessBridge.Server
                 insertCommand.Prepare();
 
                 var results = new JArray();
-
-                foreach (JObject record in records)
+                
+                logger.LogTrace("Processing records");
+                for (var i = 0; i < records.Count; i++)
                 {
+                    var record = (JObject)records[i];
                     var success = false;
                     if (await RecordExistsAsync(record, primaryKey, checkCommand))
                     {
@@ -90,7 +97,7 @@ namespace Kordata.AccessBridge.Server
                     }
                     else
                     {
-                        success = await InsertRecordAsync(tableSchema, record, insertCommand);
+                        success = await InsertRecordAsync(tableSchema, record, primaryKey, insertCommand);
                     }
 
                     var rowResult = new JObject();
@@ -98,11 +105,12 @@ namespace Kordata.AccessBridge.Server
                     results.Add(rowResult);
                 }
 
+                logger.LogTrace("Done.");
                 return results;
             }
         }
 
-        private static async Task<bool> RecordExistsAsync(JObject record, string primaryKey, OdbcCommand command)
+        private async Task<bool> RecordExistsAsync(JObject record, string primaryKey, OdbcCommand command)
         {
             if (record[primaryKey] == null) return false;
             
@@ -111,19 +119,25 @@ namespace Kordata.AccessBridge.Server
             command.Parameters.Add($"@{primaryKey}", pKey.Type.ToOdbcType()).Value = pKey.Value;
 
             var count = (int) await command.ExecuteScalarAsync();
-            return count > 0;
+            var exists = count > 0;
+
+            logger.LogTrace("Record {Key} already exists: {Exists}.", exists);
+            return exists;
         }
 
-        private static async Task<bool> UpdateRecordAsync(string table, JArray tableSchema, List<string> columns, 
+        private async Task<bool> UpdateRecordAsync(string table, JArray tableSchema, List<string> columns, 
             JObject record, string primaryKey, OdbcCommand updateCommand)
         {
+            var pKeyValue = (JValue)record[primaryKey];
+            logger.LogDebug("Updating record {Key}.", pKeyValue);
+
             var propertyBatches = record.Properties()
                 .Where(p => p.Name != primaryKey)
                 .Select(p => (Name: p.Name, Value: (JValue)p.Value))
                 .Batch(127);
             
             var tasks = propertyBatches.Select(
-                batch => UpdatePartialRecordAsync(table, tableSchema, columns, primaryKey, (JValue)record[primaryKey], batch, updateCommand)
+                batch => UpdatePartialRecordAsync(table, tableSchema, columns, primaryKey, pKeyValue, batch, updateCommand)
             );
 
             var success = true;
@@ -139,19 +153,19 @@ namespace Kordata.AccessBridge.Server
             return success;
         }
 
-        private static async Task<bool> UpdatePartialRecordAsync(string table, JArray tableSchema, List<string> columns, string pKeyName,  
+        private async Task<bool> UpdatePartialRecordAsync(string table, JArray tableSchema, List<string> columns, string pKeyName,  
             JValue pKeyValue, IEnumerable<(string Name, JValue Value)> properties, OdbcCommand updateCommand)
-        {
+        {   
+            logger.LogDebug("Updating batch of {Count} columns.", columns.Count);
             updateCommand.Parameters.Clear();
 
             var updateFragment = string.Join(",", columns.Where(c => c != pKeyName && properties.Any(p => p.Name == c)).Select(c => $"[{c}] = ?"));
             updateCommand.CommandText = $"UPDATE {table} SET {updateFragment} WHERE {pKeyName} = ?";
             updateCommand.Prepare();
 
-            properties
-                .ForEach(p => 
-                {
-                    var parameter = updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType());
+            foreach (var p in properties)
+            {
+                var parameter = updateCommand.Parameters.Add($"@{p.Name}", p.Value.Type.ToOdbcType());
 
                     var columnSchema = tableSchema.First(c => (string)c["columnName"] == p.Name);
 
@@ -161,7 +175,7 @@ namespace Kordata.AccessBridge.Server
                     }
 
                     parameter.Value = p.Value.Value;
-                });
+            }
 
             updateCommand.Parameters.Add($"@[{pKeyName}]", pKeyValue.Type.ToOdbcType()).Value = pKeyValue.Value;
 
@@ -170,8 +184,11 @@ namespace Kordata.AccessBridge.Server
             return result > 0;
         }
 
-        private static async Task<bool> InsertRecordAsync(JArray tableSchema, JObject record, OdbcCommand insertCommand)
+        private async Task<bool> InsertRecordAsync(JArray tableSchema, JObject record, string primaryKey, OdbcCommand insertCommand)
         {
+            var pKeyValue = (JValue)record[primaryKey];
+            logger.LogDebug("Inserting record {Key}.", pKeyValue);
+
             insertCommand.Parameters.Clear();
             record.Properties()
                 .Select(p => (Name: p.Name, Value: (JValue)p.Value))
@@ -190,9 +207,9 @@ namespace Kordata.AccessBridge.Server
 
                 });
 
-            var rowsEffected = await insertCommand.ExecuteNonQueryAsync();
+            var rowsAffected = await insertCommand.ExecuteNonQueryAsync();
 
-            return rowsEffected > 0;
+            return rowsAffected > 0;
         }
 
         private List<string> GetInsertColumns(JObject obj)

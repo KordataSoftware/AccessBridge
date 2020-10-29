@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using Couchbase.Lite;
-using Couchbase.Lite.Query;
-using System.Linq;
-using Newtonsoft.Json.Linq;
-using NodaTime;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace Kordata.AccessBridge.Server
 {
@@ -18,16 +12,17 @@ namespace Kordata.AccessBridge.Server
 
     public class FileRepository : IFileRepository
     {
-        private readonly string baseFilePath;
-
-        public FileRepository(IConfiguration configuration)
+        private readonly FileConfig config;
+        private readonly ILogger logger;
+        public FileRepository(IOptions<FileConfig> options, ILogger<FileRepository> logger)
         {
-            baseFilePath = configuration.GetValue<string>("Directory");
+            this.logger = logger;
+            config = options.Value;
         }
 
         public async Task PutAsync(Stream data, string bucket, string key)
         {
-            var bucketDir = Path.Combine(baseFilePath, bucket);
+            var bucketDir = Path.Combine(config.Directory, bucket);
             Directory.CreateDirectory(bucketDir);
 
             var path = Path.Combine(bucketDir, key);
