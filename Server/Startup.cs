@@ -51,6 +51,11 @@ namespace Kordata.AccessBridge.Server
             app.UseSerilogRequestLogging();
 
             app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }
