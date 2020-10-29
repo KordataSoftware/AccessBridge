@@ -26,7 +26,12 @@ namespace Kordata.AccessBridge.Server
 
         public bool DatabaseExists(string database)
         {
-            return File.Exists(Path.Combine(config.DatabaseDirectory, $"{database}.accdb"));
+            var path = Path.Combine(config.DatabaseDirectory, $"{database}.accdb");
+            var exists = File.Exists(path);
+
+            logger.LogDebug("Database at {Path} exists: {Exists}", path, exists);
+            
+            return exists;
         }
 
         public OdbcConnection CreateConnection(string database, string username = null,
