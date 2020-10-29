@@ -1,9 +1,7 @@
 using System.Data.Odbc;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MoreLinq;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Data.Common;
 using Microsoft.Extensions.Logging;

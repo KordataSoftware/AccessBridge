@@ -1,4 +1,3 @@
-
 using Couchbase.Lite;
 using Couchbase.Lite.Query;
 using Microsoft.Extensions.Logging;
@@ -21,7 +20,6 @@ namespace Kordata.AccessBridge.Server
         {
             this.logger = logger;
             config = options.Value;
-            Couchbase.Lite.Support.NetDesktop.Activate();
             CreateIndexes();
 
             logger.LogDebug("Initialized Couchbase connection factory for database {Database}", config.Name);

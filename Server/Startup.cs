@@ -2,35 +2,32 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
-using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 namespace Kordata.AccessBridge.Server
 {
     public class Startup
     {
-        private readonly IConfiguration configuration;
-        private readonly IHostingEnvironment environment;
-
-        public Startup(IConfiguration configuration, IHostingEnvironment environment)
+        public Startup(IConfiguration configuration)
         {
-            this.configuration = configuration;
-            this.environment = environment;
+            Configuration = configuration;
 
             JsonConvert.DefaultSettings = () => SchemaSerializer.Settings;
         }
+
+        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
             services.AddHttpClient("WatchWebhooks");
 
-            services.Configure<CouchbaseConfig>(configuration.GetSection(CouchbaseConfig.WatchDatabase));
-            services.Configure<AccessConfig>(configuration.GetSection(AccessConfig.MicrosoftAccess));
-            services.Configure<FileConfig>(configuration.GetSection(FileConfig.FileUpload));
+            services.Configure<CouchbaseConfig>(Configuration.GetSection(CouchbaseConfig.WatchDatabase));
+            services.Configure<AccessConfig>(Configuration.GetSection(AccessConfig.MicrosoftAccess));
+            services.Configure<FileConfig>(Configuration.GetSection(FileConfig.FileUpload));
 
             services.AddSingleton<ICouchbaseLiteFactory, CouchbaseLiteFactory>();
             services.AddSingleton<IAccessConnectionFactory, AccessConnectionFactory>();
@@ -39,17 +36,21 @@ namespace Kordata.AccessBridge.Server
             services.AddTransient<IWatchRepository, WatchRepository>();
 
             services.AddHostedService<TableWatcher>();
+
+            services.AddControllersWithViews();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMvc();
+            app.UseSerilogRequestLogging();
+
+            app.UseRouting();
         }
     }
 }
