@@ -78,7 +78,7 @@ namespace Kordata.AccessBridge.Server
                 {
                     case Couchbase.Lite.Logging.LogLevel.Verbose: return LogLevel.Trace;
                     case Couchbase.Lite.Logging.LogLevel.Debug: return LogLevel.Debug;
-                    case Couchbase.Lite.Logging.LogLevel.Info: return LogLevel.Information;
+                    case Couchbase.Lite.Logging.LogLevel.Info: return LogLevel.Debug;
                     case Couchbase.Lite.Logging.LogLevel.Warning: return LogLevel.Warning;
                     case Couchbase.Lite.Logging.LogLevel.Error: return LogLevel.Error;
                     case Couchbase.Lite.Logging.LogLevel.None: return LogLevel.None;
