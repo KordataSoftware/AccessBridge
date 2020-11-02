@@ -123,7 +123,7 @@ namespace Kordata.AccessBridge.Server
             var count = (int) await command.ExecuteScalarAsync();
             var exists = count > 0;
 
-            logger.LogDebug("Record {Key} already exists: {Exists}.", pKey, exists);
+            logger.LogDebug("Record {Key} already exists: {Exists}.", (string)pKey, exists);
             return exists;
         }
 
@@ -151,7 +151,7 @@ namespace Kordata.AccessBridge.Server
                 }
             }
 
-            logger.LogDebug("Record {Key} updated successfully: {Success}", pKeyValue, success);
+            logger.LogDebug("Record {Key} updated successfully: {Success}", (string)pKeyValue, success);
             return success;
         }
 
@@ -189,7 +189,7 @@ namespace Kordata.AccessBridge.Server
         private async Task<bool> InsertRecordAsync(JArray tableSchema, JObject record, string primaryKey, OdbcCommand insertCommand)
         {
             var pKeyValue = (JValue)record[primaryKey];
-            logger.LogDebug("Inserting record {Key}.", pKeyValue);
+            logger.LogDebug("Inserting record {Key}.", (string)pKeyValue);
 
             insertCommand.Parameters.Clear();
             record.Properties()
