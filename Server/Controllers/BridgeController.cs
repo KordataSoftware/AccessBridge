@@ -86,11 +86,13 @@ namespace Kordata.AccessBridge.Server
 
                 var results = new JArray();
                 
-                logger.LogTrace("Processing records");
+                logger.LogDebug("Processing {Count} records.", records.Count);
                 for (var i = 0; i < records.Count; i++)
                 {
                     var record = (JObject)records[i];
                     var success = false;
+
+                    logger.LogTrace("Processing record:\n{Record}", record.ToString());
                     if (await RecordExistsAsync(record, primaryKey, checkCommand))
                     {
                         success = await UpdateRecordAsync(table, tableSchema, columns, record, primaryKey, updateCommand);
@@ -121,7 +123,7 @@ namespace Kordata.AccessBridge.Server
             var count = (int) await command.ExecuteScalarAsync();
             var exists = count > 0;
 
-            logger.LogTrace("Record {Key} already exists: {Exists}.", exists);
+            logger.LogDebug("Record {Key} already exists: {Exists}.", exists);
             return exists;
         }
 
@@ -129,7 +131,6 @@ namespace Kordata.AccessBridge.Server
             JObject record, string primaryKey, OdbcCommand updateCommand)
         {
             var pKeyValue = (JValue)record[primaryKey];
-            logger.LogDebug("Updating record {Key}.", pKeyValue);
 
             var propertyBatches = record.Properties()
                 .Where(p => p.Name != primaryKey)
@@ -150,6 +151,7 @@ namespace Kordata.AccessBridge.Server
                 }
             }
 
+            logger.LogDebug("Record {Key} updated successfully: {Success}", pKeyValue, success);
             return success;
         }
 
