@@ -10,7 +10,7 @@
       "request": "launch",
       "preLaunchTask": "build-server",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/Server/bin/Debug/netcoreapp2.2/Kordata.AccessBridge.Server.dll",
+      "program": "${workspaceFolder}/Server/bin/Debug/netcoreapp3.1/win7-x64/Kordata.AccessBridge.Server.dll",
       "args": [],
       "cwd": "${workspaceFolder}/Server",
       "stopAtEntry": false,
@@ -30,7 +30,7 @@
       "request": "launch",
       "preLaunchTask": "build-sink",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/TestSink/bin/Debug/netcoreapp2.2/Kordata.AccessBridge.TestSink.dll",
+      "program": "${workspaceFolder}/TestSink/bin/Debug/netcoreapp3.1/win7-x64/Kordata.AccessBridge.TestSink.dll",
       "args": [],
       "cwd": "${workspaceFolder}/TestSink",
       "stopAtEntry": false,

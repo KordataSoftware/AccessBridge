@@ -18,7 +18,7 @@ namespace Kordata.AccessBridge.Server
 {
     public class TableWatcher : IHostedService, IDisposable
     {
-        private const int UpdateDelay = 20;
+        private const int UpdateDelay = 900;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IAccessConnectionFactory connectionFactory;
         private readonly IWatchRepository watchRepository;
