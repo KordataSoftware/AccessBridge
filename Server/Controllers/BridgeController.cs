@@ -123,7 +123,7 @@ namespace Kordata.AccessBridge.Server
             var count = (int) await command.ExecuteScalarAsync();
             var exists = count > 0;
 
-            logger.LogDebug("Record {Key} already exists: {Exists}.", exists);
+            logger.LogDebug("Record {Key} already exists: {Exists}.", pKey, exists);
             return exists;
         }
 
